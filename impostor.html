@@ -232,17 +232,56 @@
     <script>
         // --- BASE DE DATOS DE PALABRAS ---
         const WORD_DATABASE = [
-            "Rosalía", "Ibai Llanos", "Fernando Alonso", "Rafa Nadal", "Belén Esteban", 
-            "El Rey Felipe VI", "Antonio Banderas", "Penélope Cruz", "Bad Bunny", "Messi", 
-            "Shakira", "Pikachu", "Harry Potter", "Doraemon", "Spiderman",
-            "Tortilla de Patata", "Paella", "Gazpacho", "Jamón Ibérico", "Croquetas", 
-            "Churros", "Sushi", "Pizza", "Hamburguesa", "Kebab", "Cerveza", "Vino Tinto",
-            "Mercadona", "La Playa", "Discoteca", "Hospital", "Cementerio", "Cárcel", 
-            "Aeropuerto", "Gimnasio", "IKEA", "Colegio", "Cuarto de Baño", "La Luna",
-            "Papel Higiénico", "Satisfyer", "iPhone", "Tanga", "Calcetines", 
-            "Cepillo de Dientes", "Mando de la TV", "Sartén", "Microondas", "Espejo",
-            "Boda", "Divorcio", "Resaca", "Siesta", "Cotilleo", "Infidelidad"
-        ];
+    // --- FAMOSOS & ICONOS ---
+    "Rosalía", "Ibai Llanos", "Fernando Alonso", "Rafa Nadal", "Belén Esteban",
+    "El Rey Felipe VI", "C. Tangana", "Quevedo", "Bad Bunny", "Messi",
+    "Cristiano Ronaldo", "Aitana", "Broncano", "La Pija y la Quinqui", "Pedro Sánchez",
+    "Ayuso", "Georgina", "Kim Kardashian", "Elon Musk", "Dua Lipa",
+    "Taylor Swift", "Bizarrap", "IlloJuan", "El Xokas", "Hasbulla",
+    
+    // --- MADRID SUR & CIUDADES ---
+    "Leganés", "Getafe", "Fuenlabrada", "Móstoles", "Alcorcón", 
+    "Parla", "Pinto", "Valdemoro", "Villaverde", "Vallecas", 
+    "Usera", "Carabanchel", "Aranjuez", "Chinchón", "La Cubierta de Leganés",
+    "Cerro de los Ángeles", "Parquesur", "Xanadú", "Estación de Atocha", "Sol",
+    
+    // --- PARQUES DE ATRACCIONES & OCIO ---
+    "Parque Warner", "Parque de Atracciones", "Aquopolis", "PortAventura", "Disneyland",
+    "La Lanzadera", "Stunt Fall", "Superman", "El Abismo", "Casa del Terror",
+    "Montaña Rusa", "Noria", "Coches de Choque", "Tiovivo", "Pasaje del Terror",
+    "Zoo de Madrid", "Faunia", "Teleférico", "Kinépolis", "Bowling",
+    
+    // --- FIESTA & NOCHE ---
+    "Fabrik", "Kapital", "Teatro Barceló", "Independance", "Chupitería",
+    "Botellón", "After", "Resaca", "Jägermeister", "Tequila", 
+    "Cerveza", "Vino Tinto", "Kalimotxo", "Vaso de Tubo", "Copa de Balón",
+    "Portero de Discoteca", "Guardarropa", "DJ", "Reggaeton", "Techno",
+    "Uber", "Cabify", "Bus Búho", "Control de Alcoholemia", "Kebab de madrugada",
+    
+    // --- VIDA COTIDIANA (20-25 AÑOS) ---
+    "Tinder", "Bumble", "Grindr", "Instagram", "TikTok", 
+    "BeReal", "OnlyFans", "Spotify", "Netflix", "ChatGPT",
+    "Bizum", "Grupo de WhatsApp", "Sticker", "Visto Azul", "Bloqueado",
+    "Ghosting", "Red Flag", "Friendzone", "Situationship", "Casi Algo",
+    
+    // --- OBJETOS & COSAS RANDOM ---
+    "Vape", "Cachimba", "Satisfyer", "Condón", "Test de Embarazo",
+    "Air Fryer", "Tupper de Mamá", "Abono Transporte", "Tarjeta Multi", "Cercanías Renfe",
+    "iPhone", "Cargador del Móvil", "Batería Portátil", "AirPods", "Alexa",
+    "Papel de Fumar", "Mechero", "Cenicero", "Monster Energy", "Red Bull",
+    "Proteína", "Creatina", "Gymbro", "Satisfyer", "Pijama",
+    
+    // --- LUGARES ---
+    "Mercadona", "Zara", "Primark", "IKEA", "Decathlon",
+    "Gimnasio", "Biblioteca", "Universidad", "Piscina Municipal", "Playa",
+    "Camping", "Festival de Música", "Aeropuerto", "Avión (Ryanair)", "BlaBlaCar",
+    "Comisaría", "Hospital", "Dentista", "Tanatorio", "Motel",
+    
+    // --- COMIDA ---
+    "Tortilla de Patata", "Paella", "Croquetas", "Bravas", "Jamón Serrano",
+    "Sushi", "Pizza", "Hamburguesa", "McFlurry", "Goiko",
+    "100 Montaditos", "Taco Bell", "Churros con Chocolate", "Torrijas", "Roscón de Reyes"
+];
 
         // --- ESTADO DEL JUEGO ---
         let players = ['', '', '']; // CAMBIO: Inicial 3 huecos vacíos en lugar de 4
