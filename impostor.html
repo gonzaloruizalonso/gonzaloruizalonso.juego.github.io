@@ -49,11 +49,19 @@
         .player-input {
             background-color: var(--card-bg);
             border: 1px solid #334155;
-            color: white;
+            color: #ffffff !important; /* Forzar blanco puro */
+            font-weight: 500;
         }
+        
+        /* Color del placeholder (texto de ayuda) más claro */
+        .player-input::placeholder {
+            color: #94a3b8 !important;
+            opacity: 1;
+        }
+
         .player-input:focus {
             background-color: var(--card-bg);
-            color: white;
+            color: #ffffff !important;
             border-color: var(--accent-red);
             box-shadow: none;
         }
@@ -237,7 +245,7 @@
         ];
 
         // --- ESTADO DEL JUEGO ---
-        let players = ['', '', '', '']; // Inicial 4 huecos vacíos
+        let players = ['', '', '']; // CAMBIO: Inicial 3 huecos vacíos en lugar de 4
         let usedWords = [];
         let secretWord = "";
         let impostorIndex = -1;
@@ -404,7 +412,10 @@
         // --- PANTALLA FINAL ---
 
         function showResults() {
-            const randomStarter = activePlayersList[Math.floor(Math.random() * activePlayersList.length)];
+            // CAMBIO: Aseguramos que la selección sea aleatoria en cada ejecución
+            const randomIndex = Math.floor(Math.random() * activePlayersList.length);
+            const randomStarter = activePlayersList[randomIndex];
+            
             document.getElementById('starterName').innerText = randomStarter;
             switchScreen('resultScreen');
         }
