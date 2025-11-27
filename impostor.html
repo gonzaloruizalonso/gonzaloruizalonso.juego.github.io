@@ -396,10 +396,10 @@
         
         // --- BASE DE DATOS DE RESPALDO (FALLBACK) ---
         const FALLBACK_WORDS = [
-			// --- FAMOSOS & ICONOS ---
+            // --- FAMOSOS & ICONOS ---
 			"Rosalía", "Ibai Llanos", "Fernando Alonso", "Rafa Nadal", "Belén Esteban",
 			"El Rey Felipe VI", "C. Tangana", "Quevedo", "Bad Bunny", "Messi",
-			"Cristiano Ronaldo", "Aitana", "Broncano", "La Pija y la Quinqui", "Pedro Sánchez",
+			"Cristiano Ronaldo", "Aitana", "Broncano", "Pedro Sánchez",
 			"Ayuso", "Georgina", "Kim Kardashian", "Elon Musk", "Dua Lipa",
 			"Taylor Swift", "Bizarrap", "IlloJuan", "El Xokas", "Hasbulla",
 			
@@ -416,21 +416,15 @@
 			"Zoo de Madrid", "Faunia", "Teleférico", "Kinépolis", "Bowling",
 			
 			// --- FIESTA & NOCHE ---
-			"Fabrik", "Kapital", "Teatro Barceló", "Independance", "Chupitería",
-			"Botellón", "After", "Resaca", "Jägermeister", "Tequila", 
-			"Cerveza", "Vino Tinto", "Kalimotxo", "Vaso de Tubo", "Copa de Balón",
-			"Portero de Discoteca", "Guardarropa", "DJ", "Reggaeton", "Techno",
-			"Uber", "Cabify", "Bus Búho", "Control de Alcoholemia", "Kebab de madrugada",
+			"Cerveza", "Vino Tinto", "Uber", "Cabify",
 			
 			// --- VIDA COTIDIANA (20-25 AÑOS) ---
 			"Tinder", "Bumble", "Grindr", "Instagram", "TikTok", 
 			"BeReal", "OnlyFans", "Spotify", "Netflix", "ChatGPT",
-			"Bizum", "Grupo de WhatsApp", "Sticker", "Visto Azul", "Bloqueado",
-			"Ghosting", "Red Flag", "Friendzone", "Situationship", "Casi Algo",
+			"Bizum",
 			
 			// --- OBJETOS & COSAS RANDOM ---
-			"Vape", "Cachimba", "Satisfyer", "Condón", "Test de Embarazo",
-			"Air Fryer", "Tupper de Mamá", "Abono Transporte", "Tarjeta Multi", "Cercanías Renfe",
+			"Satisfyer", "Air Fryer", "Abono Transporte", "Cercanías Renfe",
 			"iPhone", "Cargador del Móvil", "Batería Portátil", "AirPods", "Alexa",
 			"Papel de Fumar", "Mechero", "Cenicero", "Monster Energy", "Red Bull",
 			"Proteína", "Creatina", "Gymbro", "Satisfyer", "Pijama",
@@ -439,7 +433,7 @@
 			"Mercadona", "Zara", "Primark", "IKEA", "Decathlon",
 			"Gimnasio", "Biblioteca", "Universidad", "Piscina Municipal", "Playa",
 			"Camping", "Festival de Música", "Aeropuerto", "Avión (Ryanair)", "BlaBlaCar",
-			"Comisaría", "Hospital", "Dentista", "Tanatorio", "Motel",
+			"Comisaría", "Hospital", "Dentista", "Tanatorio", 
 			
 			// --- COMIDA ---
 			"Tortilla de Patata", "Paella", "Croquetas", "Bravas", "Jamón Serrano",
@@ -718,7 +712,13 @@
 
                 // MODO PERSONALIZADO: USA IA Y LOADER
                 document.getElementById('loadingOverlay').style.display = 'flex';
-                document.getElementById('loadingText').innerText = `Generando palabra sobre: ${selectedTopic}`;
+                
+                // HIDE SPOILER: Si hay más de un tema, ocultar cuál se eligió
+                if (topicsList.length > 1) {
+                    document.getElementById('loadingText').innerText = "Generando palabra de uno de tus temas...";
+                } else {
+                    document.getElementById('loadingText').innerText = `Generando palabra sobre: ${selectedTopic}`;
+                }
                 
                 try {
                     const newWord = await fetchWordFromAI(selectedTopic);
