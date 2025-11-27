@@ -14,6 +14,7 @@
             --card-bg: #1e293b;
             --accent-red: #ef4444;
             --accent-green: #10b981;
+            --accent-purple: #a855f7;
         }
 
         body {
@@ -32,6 +33,7 @@
             flex: 1;
             display: flex;
             flex-direction: column;
+            position: relative;
         }
 
         /* Títulos */
@@ -46,24 +48,27 @@
         }
 
         /* Inputs */
-        .player-input {
+        .player-input, .theme-input {
             background-color: var(--card-bg);
             border: 1px solid #334155;
-            color: #ffffff !important; /* Forzar blanco puro */
+            color: #ffffff !important;
             font-weight: 500;
         }
         
-        /* Color del placeholder (texto de ayuda) más claro */
-        .player-input::placeholder {
+        .player-input::placeholder, .theme-input::placeholder {
             color: #94a3b8 !important;
             opacity: 1;
         }
 
-        .player-input:focus {
+        .player-input:focus, .theme-input:focus {
             background-color: var(--card-bg);
             color: #ffffff !important;
             border-color: var(--accent-red);
             box-shadow: none;
+        }
+
+        .theme-input:focus {
+            border-color: var(--accent-purple);
         }
 
         /* Cartas */
@@ -105,9 +110,59 @@
             font-weight: bold;
             font-size: 1.1rem;
             box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+            position: relative;
+            overflow: hidden;
         }
         .btn-start:active {
             transform: scale(0.98);
+        }
+        .btn-start:disabled {
+            background: #334155;
+            box-shadow: none;
+            color: #94a3b8;
+        }
+
+        .btn-settings {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: transparent;
+            border: none;
+            color: #64748b;
+            font-size: 1.2rem;
+            z-index: 50;
+        }
+        .btn-settings:hover {
+            color: white;
+        }
+
+        /* Mode Selector */
+        .mode-selector {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 5px;
+            display: flex;
+            border: 1px solid #334155;
+        }
+        .mode-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .mode-btn.active {
+            background-color: #334155;
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .mode-btn.active.custom-mode {
+            background-color: #581c87; /* Purple for custom */
+            color: white;
         }
 
         /* Utilidades */
@@ -135,17 +190,118 @@
             line-height: 1.2;
             text-shadow: 0 2px 10px rgba(0,0,0,0.5);
         }
+
+        /* Loader Overlay */
+        #loadingOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.9);
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+        .spinner-ai {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(239, 68, 68, 0.3);
+            border-radius: 50%;
+            border-top-color: #ef4444;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Modal simple */
+        .modal-content {
+            background-color: var(--card-bg);
+            color: white;
+            border: 1px solid #334155;
+        }
+        .modal-header, .modal-footer {
+            border-color: #334155;
+        }
+        
+        /* Pequeño indicador de validación en configuración */
+        .validation-status {
+            font-size: 0.75rem;
+            margin-top: 5px;
+            display: none;
+        }
+        .validation-status.success { color: var(--accent-green); display: block; }
+        .validation-status.error { color: var(--accent-red); display: block; }
+        .validation-status.checking { color: #facc15; display: block; }
     </style>
 </head>
 <body>
 
     <div class="app-container">
         
+        <!-- SETTINGS MODAL -->
+        <div class="modal fade" id="settingsModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Configuración</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="apiKeyInput" class="form-label text-secondary small">Gemini API Key (Opcional)</label>
+                            <input type="password" class="form-control bg-dark border-secondary text-white shadow-none" id="apiKeyInput" placeholder="Pega tu API Key aquí">
+                            <div class="form-text text-secondary" style="font-size: 0.75rem;">
+                                La aplicación incluye una clave por defecto. Si usas la tuya, verificaremos que funcione.
+                            </div>
+                            <div id="settingsValidationStatus" class="validation-status"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" id="btnSaveSettings" class="btn btn-primary w-100" onclick="saveSettings()">Guardar y Probar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LOADING OVERLAY -->
+        <div id="loadingOverlay">
+            <div class="spinner-ai mb-3"></div>
+            <h5 class="text-white fw-bold">Consultando a la IA...</h5>
+            <p id="loadingText" class="text-secondary small">Buscando una palabra única</p>
+        </div>
+
         <!-- PANTALLA 1: CONFIGURACIÓN -->
-        <div id="setupScreen" class="screen active">
+        <div id="setupScreen" class="screen active position-relative">
+            <button class="btn-settings" data-bs-toggle="modal" data-bs-target="#settingsModal">
+                <i class="fas fa-cog"></i>
+            </button>
+
             <div class="text-center mt-3 mb-4">
                 <h1 class="display-4 title-gradient">El Impostor</h1>
                 <p class="text-secondary small">Descubre quién miente. Mínimo 3 jugadores.</p>
+            </div>
+
+            <!-- SELECCIÓN DE MODO DE JUEGO (Solo visible si la API responde OK) -->
+            <div id="gameModeContainer" class="mb-3 d-none animate-in fade-in">
+                <div class="mode-selector mb-3">
+                    <button class="mode-btn active" id="btnModeClassic" onclick="setGameMode('classic')">
+                        <i class="fas fa-dice me-1"></i> Clásico
+                    </button>
+                    <button class="mode-btn" id="btnModeCustom" onclick="setGameMode('custom')">
+                        <i class="fas fa-wand-magic-sparkles me-1"></i> Personalizado
+                    </button>
+                </div>
+
+                <!-- INPUT PARA TEMA PERSONALIZADO -->
+                <div id="customThemeInputContainer" class="d-none">
+                    <input type="text" id="customThemeInput" class="form-control theme-input py-2 shadow-none" placeholder="Escribe un tema (ej: Harry Potter, Comida Japonesa...)">
+                    <div class="form-text text-end text-secondary" style="font-size: 0.7rem;">La IA generará palabras sobre este tema.</div>
+                </div>
             </div>
 
             <div id="playersContainer" class="flex-grow-1 overflow-auto mb-3">
@@ -157,11 +313,11 @@
             </button>
 
             <div class="mt-auto">
-                <button class="btn btn-primary w-100 btn-start text-white rounded-4" onclick="startGame()">
+                <button id="startBtn" class="btn btn-primary w-100 btn-start text-white rounded-4" onclick="startGame()">
                     <i class="fas fa-play me-2"></i> EMPEZAR PARTIDA
                 </button>
                 <div class="text-center mt-2">
-                    <span id="playerCountLabel" class="text-muted small">0 jugadores listos</span>
+                    <span id="playerCountLabel" class="text-light small opacity-75">0 jugadores listos</span>
                 </div>
             </div>
         </div>
@@ -228,10 +384,17 @@
 
     </div>
 
+    <!-- Bootstrap Bundle (for Modal) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <!-- JAVASCRIPT LOGIC -->
     <script>
-        // --- BASE DE DATOS DE PALABRAS ---
-        const WORD_DATABASE = [
+        // --- API KEY ---
+        // Clave inyectada por defecto
+        const injectedApiKey = "AIzaSyCmhu36rkp1aLit9i0R8_iy2GQdpg0ANHw"; 
+        
+        // --- BASE DE DATOS DE RESPALDO (FALLBACK) ---
+        const FALLBACK_WORDS = [
     // --- FAMOSOS & ICONOS ---
     "Rosalía", "Ibai Llanos", "Fernando Alonso", "Rafa Nadal", "Belén Esteban",
     "El Rey Felipe VI", "C. Tangana", "Quevedo", "Bad Bunny", "Messi",
@@ -284,28 +447,159 @@
 ];
 
         // --- ESTADO DEL JUEGO ---
-        let players = ['', '', '']; // CAMBIO: Inicial 3 huecos vacíos en lugar de 4
+        let players = ['', '', ''];
         let usedWords = [];
         let secretWord = "";
         let impostorIndex = -1;
         let currentPlayerIndex = 0;
         let activePlayersList = [];
+        let currentGameMode = 'classic'; // 'classic' or 'custom'
 
         // --- INICIALIZACIÓN ---
         document.addEventListener('DOMContentLoaded', () => {
             renderPlayerInputs();
+            
+            // Cargar API Key guardada si existe
+            const savedKey = localStorage.getItem('impostor_api_key');
+            if (savedKey) {
+                document.getElementById('apiKeyInput').value = savedKey;
+            }
+
+            // PROBAR API AL INICIO
+            checkApiAvailability();
         });
+
+        // --- VALIDACIÓN DE API REAL ---
+        async function validateApiKey(apiKey) {
+            try {
+                // Hacemos una petición mínima para ver si la llave es válida
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: "Test" }] }]
+                    })
+                });
+                return response.ok; // Devuelve true solo si es 200 OK
+            } catch (e) {
+                return false;
+            }
+        }
+
+        async function checkApiAvailability() {
+            // Prioridad: Usuario > Inyectada
+            const userKey = localStorage.getItem('impostor_api_key');
+            let apiKeyToTest = userKey;
+            
+            // Si no hay key de usuario, probamos la inyectada
+            if (!apiKeyToTest && injectedApiKey && injectedApiKey.trim() !== "") {
+                apiKeyToTest = injectedApiKey;
+            }
+
+            // Si no hay ninguna clave, ocultar modo custom
+            if (!apiKeyToTest) {
+                document.getElementById('gameModeContainer').classList.add('d-none');
+                return;
+            }
+
+            // Validar la clave haciendo una petición real
+            const isValid = await validateApiKey(apiKeyToTest);
+
+            if (isValid) {
+                document.getElementById('gameModeContainer').classList.remove('d-none');
+            } else {
+                document.getElementById('gameModeContainer').classList.add('d-none');
+                // Si estábamos en modo custom y la API falla, volver a clásico
+                if (currentGameMode === 'custom') {
+                    setGameMode('classic');
+                }
+            }
+        }
+
+        // --- GESTIÓN DE SETTINGS ---
+        async function saveSettings() {
+            const btn = document.getElementById('btnSaveSettings');
+            const statusEl = document.getElementById('settingsValidationStatus');
+            const keyInput = document.getElementById('apiKeyInput').value.trim();
+            
+            // UI Feedback
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Verificando...';
+            statusEl.className = 'validation-status checking';
+            statusEl.innerText = 'Conectando con Google Gemini...';
+
+            let isValid = false;
+            
+            if (keyInput) {
+                // Si el usuario metió una clave, la probamos
+                isValid = await validateApiKey(keyInput);
+            } else {
+                // Si la dejó vacía, probamos la por defecto
+                isValid = await validateApiKey(injectedApiKey);
+            }
+
+            if (isValid) {
+                // Guardar solo si es válida o si se ha borrado (para usar la default)
+                if (keyInput) {
+                    localStorage.setItem('impostor_api_key', keyInput);
+                } else {
+                    localStorage.removeItem('impostor_api_key');
+                }
+                
+                statusEl.className = 'validation-status success';
+                statusEl.innerText = '¡Conexión exitosa!';
+                
+                setTimeout(() => {
+                    const modalEl = document.getElementById('settingsModal');
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    modal.hide();
+                    
+                    // Resetear UI del modal
+                    btn.disabled = false;
+                    btn.innerText = 'Guardar y Probar';
+                    statusEl.innerText = '';
+                    statusEl.style.display = 'none';
+                    
+                    // Actualizar UI principal
+                    checkApiAvailability(); 
+                }, 1000);
+
+            } else {
+                statusEl.className = 'validation-status error';
+                statusEl.innerText = 'Error: La clave API no es válida o no hay conexión.';
+                btn.disabled = false;
+                btn.innerText = 'Guardar y Probar';
+                // No cerramos el modal para que el usuario corrija
+            }
+        }
+
+        // --- GESTIÓN DE MODO DE JUEGO ---
+        function setGameMode(mode) {
+            currentGameMode = mode;
+            
+            // UI Update
+            document.getElementById('btnModeClassic').classList.remove('active', 'custom-mode');
+            document.getElementById('btnModeCustom').classList.remove('active', 'custom-mode');
+            
+            if (mode === 'classic') {
+                document.getElementById('btnModeClassic').classList.add('active');
+                document.getElementById('customThemeInputContainer').classList.add('d-none');
+            } else {
+                document.getElementById('btnModeCustom').classList.add('active', 'custom-mode');
+                document.getElementById('customThemeInputContainer').classList.remove('d-none');
+                document.getElementById('customThemeInput').focus();
+            }
+        }
 
         // --- GESTIÓN DE JUGADORES (SETUP) ---
         function renderPlayerInputs() {
             const container = document.getElementById('playersContainer');
-            container.innerHTML = ''; // Limpiar
+            container.innerHTML = ''; 
 
             players.forEach((player, index) => {
                 const div = document.createElement('div');
                 div.className = 'input-group mb-2';
                 
-                // Botón de eliminar solo si hay más de 3
                 const deleteBtn = players.length > 3 
                     ? `<button class="btn btn-outline-secondary border-start-0" type="button" onclick="removePlayer(${index})"><i class="fas fa-times"></i></button>`
                     : '';
@@ -341,7 +635,7 @@
         function updateCountLabel() {
             const count = players.filter(p => p.trim() !== '').length;
             const label = document.getElementById('playerCountLabel');
-            const btn = document.querySelector('.btn-start');
+            const btn = document.getElementById('startBtn');
             
             label.innerText = `${count} jugadores listos`;
             
@@ -354,6 +648,65 @@
             }
         }
 
+        // --- LÓGICA DE PALABRAS ---
+        function getFallbackWord() {
+            let fallbackWord;
+            let attempts = 0;
+            do {
+                fallbackWord = FALLBACK_WORDS[Math.floor(Math.random() * FALLBACK_WORDS.length)];
+                attempts++;
+            } while (usedWords.includes(fallbackWord) && attempts < 50);
+            return fallbackWord;
+        }
+
+        async function fetchWordFromAI(customTopic = null) {
+            // Prioridad: Clave del usuario > Clave inyectada
+            const userKey = localStorage.getItem('impostor_api_key');
+            const apiKeyToUse = userKey || injectedApiKey;
+
+            // Si no hay ninguna clave, usamos fallback
+            if (!apiKeyToUse || apiKeyToUse.trim() === "") {
+                return getFallbackWord();
+            }
+
+            try {
+                let prompt = "";
+                
+                if (customTopic && customTopic.trim() !== "") {
+                    // Prompt para modo Personalizado
+                    prompt = `Genera una sola palabra concreta o nombre propio relacionado específicamente con el tema: "${customTopic}". Debe ser algo reconocible y jugable en el juego 'El Impostor'. Evita descripciones, solo la palabra. Si el tema es muy oscuro, usa algo general relacionado. Evita estas palabras recientes: ${usedWords.slice(-5).join(", ")}.`;
+                } else {
+                    // Prompt para modo Clásico
+                    prompt = "Genera una sola palabra o concepto concreto (máximo 3 palabras) en español para jugar al juego 'El Impostor' (Spyfall). Categorías sugeridas: Famosos actuales, Comida típica, Objetos cotidianos, Lugares, Eventos. Que sea algo divertido y reconocible en España. Responde SOLAMENTE con la palabra. Evita conceptos abstractos como sentimientos. Evita estas palabras: " + usedWords.slice(-10).join(", ");
+                }
+                
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKeyToUse}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: prompt
+                            }]
+                        }]
+                    })
+                });
+
+                if (!response.ok) throw new Error(`API Error: ${response.status}`);
+
+                const data = await response.json();
+                const aiWord = data.candidates[0].content.parts[0].text.trim().replace(/\.$/, '').replace(/\*+/g, ''); // Limpiar puntos y asteriscos
+                return aiWord;
+
+            } catch (error) {
+                console.warn("Fallo en IA, usando base de datos local:", error);
+                // Si falla en modo personalizado, avisamos (opcionalmente) pero devolvemos una general para no romper el juego
+                return getFallbackWord();
+            }
+        }
+
         // --- LÓGICA DEL JUEGO ---
 
         function switchScreen(screenId) {
@@ -361,8 +714,7 @@
             document.getElementById(screenId).classList.add('active');
         }
 
-        function startGame() {
-            // Filtrar nombres vacíos
+        async function startGame() {
             activePlayersList = players.filter(p => p.trim() !== '');
             
             if (activePlayersList.length < 3) {
@@ -370,19 +722,38 @@
                 return;
             }
 
-            setupRound();
+            // Validar tema personalizado si está activo
+            let topic = null;
+            if (currentGameMode === 'custom') {
+                const input = document.getElementById('customThemeInput');
+                topic = input.value.trim();
+                if (!topic) {
+                    alert("Por favor, escribe un tema para jugar en modo personalizado.");
+                    input.focus();
+                    return;
+                }
+            }
+
+            await setupRound(topic);
             switchScreen('gameScreen');
             showTurn();
         }
 
-        function setupRound() {
-            // Elegir palabra no repetida
-            let newWord;
-            let attempts = 0;
-            do {
-                newWord = WORD_DATABASE[Math.floor(Math.random() * WORD_DATABASE.length)];
-                attempts++;
-            } while (usedWords.includes(newWord) && attempts < 50);
+        async function setupRound(topic = null) {
+            // Mostrar Loader
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            
+            if (topic) {
+                document.getElementById('loadingText').innerText = `Generando palabra sobre: ${topic}`;
+            } else {
+                document.getElementById('loadingText').innerText = "Buscando una palabra única";
+            }
+
+            // Obtener palabra
+            const newWord = await fetchWordFromAI(topic);
+            
+            // Ocultar loader
+            document.getElementById('loadingOverlay').style.display = 'none';
 
             // Guardar historial
             if (usedWords.length > 20) usedWords.shift();
@@ -397,11 +768,9 @@
         // --- PANTALLA DE JUEGO (DISTRIBUCIÓN) ---
 
         function showTurn() {
-            // Resetear vista
             document.getElementById('hiddenCard').classList.remove('d-none');
             document.getElementById('revealedCard').classList.add('d-none');
             
-            // Actualizar textos
             document.getElementById('currentTurnLabel').innerText = `${currentPlayerIndex + 1}/${activePlayersList.length}`;
             document.getElementById('playerNameDisplay').innerText = activePlayersList[currentPlayerIndex];
         }
@@ -413,7 +782,6 @@
             document.getElementById('hiddenCard').classList.add('d-none');
             document.getElementById('revealedCard').classList.remove('d-none');
 
-            // Limpiar clases anteriores
             cardContent.classList.remove('impostor', 'civilian');
 
             if (isImpostor) {
@@ -451,7 +819,6 @@
         // --- PANTALLA FINAL ---
 
         function showResults() {
-            // CAMBIO: Aseguramos que la selección sea aleatoria en cada ejecución
             const randomIndex = Math.floor(Math.random() * activePlayersList.length);
             const randomStarter = activePlayersList[randomIndex];
             
@@ -459,9 +826,14 @@
             switchScreen('resultScreen');
         }
 
-        function playAgain() {
-            // Misma lista de jugadores, nueva palabra y rol
-            setupRound();
+        async function playAgain() {
+            // Reutilizar el tema si estamos en modo custom
+            let topic = null;
+            if (currentGameMode === 'custom') {
+                topic = document.getElementById('customThemeInput').value.trim();
+            }
+            
+            await setupRound(topic);
             switchScreen('gameScreen');
             showTurn();
         }
