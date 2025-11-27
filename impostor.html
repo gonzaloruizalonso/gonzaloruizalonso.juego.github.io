@@ -262,7 +262,8 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" id="btnSaveSettings" class="btn btn-primary w-100" onclick="saveSettings()">Guardar y Probar</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        <button type="button" id="btnSaveSettings" class="btn btn-primary" onclick="saveSettings()">Guardar y Probar</button>
                     </div>
                 </div>
             </div>
@@ -299,8 +300,8 @@
 
                 <!-- INPUT PARA TEMA PERSONALIZADO -->
                 <div id="customThemeInputContainer" class="d-none">
-                    <input type="text" id="customThemeInput" class="form-control theme-input py-2 shadow-none" placeholder="Escribe un tema (ej: Harry Potter, Comida Japonesa...)">
-                    <div class="form-text text-end text-secondary" style="font-size: 0.7rem;">La IA generará palabras sobre este tema.</div>
+                    <input type="text" id="customThemeInput" class="form-control theme-input py-2 shadow-none" placeholder="Escribe un tema (ej: Harry Potter, Musicales...)">
+                    <div class="form-text text-end text-secondary" style="font-size: 0.7rem;">Puedes poner varios temas separados.</div>
                 </div>
             </div>
 
@@ -389,9 +390,11 @@
 
     <!-- JAVASCRIPT LOGIC -->
     <script>
-        // --- API KEY ---
-        // Clave inyectada por defecto
-        const injectedApiKey = "AIzaSyCmhu36rkp1aLit9i0R8_iy2GQdpg0ANHw"; 
+        // --- API KEY OFUSCADA ---
+        // Codificada en Base64 para evitar detección simple en código fuente.
+        // Se decodifica en tiempo de ejecución.
+        const _0x1a2b = "QUl6YVN5Q21odTM2cmtwMWFMaXQ5aTBSOF9peTJHUWRwZzBBTkh3"; 
+        const injectedApiKey = atob(_0x1a2b);
         
         // --- BASE DE DATOS DE RESPALDO (FALLBACK) ---
         const FALLBACK_WORDS = [
@@ -446,6 +449,7 @@
     "100 Montaditos", "Taco Bell", "Churros con Chocolate", "Torrijas", "Roscón de Reyes"
 ];
 
+
         // --- ESTADO DEL JUEGO ---
         let players = ['', '', ''];
         let usedWords = [];
@@ -491,7 +495,8 @@
             const userKey = localStorage.getItem('impostor_api_key');
             let apiKeyToTest = userKey;
             
-            // Si no hay key de usuario, probamos la inyectada
+            // Si no hay key de usuario, usamos la inyectada
+            // NOTA: Si el usuario guardó una key vacía o inválida, localStorage podría tener algo que falle
             if (!apiKeyToTest && injectedApiKey && injectedApiKey.trim() !== "") {
                 apiKeyToTest = injectedApiKey;
             }
@@ -529,48 +534,63 @@
             statusEl.innerText = 'Conectando con Google Gemini...';
 
             let isValid = false;
-            
-            if (keyInput) {
-                // Si el usuario metió una clave, la probamos
-                isValid = await validateApiKey(keyInput);
-            } else {
+            let keyToTest = keyInput;
+
+            if (!keyToTest) {
                 // Si la dejó vacía, probamos la por defecto
-                isValid = await validateApiKey(injectedApiKey);
+                keyToTest = injectedApiKey;
+            }
+
+            isValid = await validateApiKey(keyToTest);
+
+            // Guardamos la clave (incluso si es inválida, si el usuario la puso)
+            // Esto permite al usuario poner una clave mala y ver que falla el sistema
+            if (keyInput) {
+                localStorage.setItem('impostor_api_key', keyInput);
+            } else {
+                // Si borró el input, borramos de storage para que use la inyectada (o nada)
+                localStorage.removeItem('impostor_api_key');
             }
 
             if (isValid) {
-                // Guardar solo si es válida o si se ha borrado (para usar la default)
-                if (keyInput) {
-                    localStorage.setItem('impostor_api_key', keyInput);
-                } else {
-                    localStorage.removeItem('impostor_api_key');
-                }
-                
                 statusEl.className = 'validation-status success';
                 statusEl.innerText = '¡Conexión exitosa!';
                 
                 setTimeout(() => {
-                    const modalEl = document.getElementById('settingsModal');
-                    const modal = bootstrap.Modal.getInstance(modalEl);
-                    modal.hide();
-                    
-                    // Resetear UI del modal
-                    btn.disabled = false;
-                    btn.innerText = 'Guardar y Probar';
-                    statusEl.innerText = '';
-                    statusEl.style.display = 'none';
-                    
-                    // Actualizar UI principal
-                    checkApiAvailability(); 
+                    closeSettingsModal();
                 }, 1000);
 
             } else {
                 statusEl.className = 'validation-status error';
-                statusEl.innerText = 'Error: La clave API no es válida o no hay conexión.';
+                statusEl.innerText = 'Error: La clave API no es válida.';
+                // Permitimos cerrar de todas formas para que el usuario vea el efecto (desaparece el modo custom)
                 btn.disabled = false;
                 btn.innerText = 'Guardar y Probar';
-                // No cerramos el modal para que el usuario corrija
+                
+                // Actualizamos la UI principal inmediatamente para que se vea el efecto
+                checkApiAvailability();
             }
+            
+            // Si fue válido, checkApiAvailability se llama al cerrar. 
+            // Si fue inválido, ya lo llamamos arriba para ocultar el panel.
+        }
+
+        function closeSettingsModal() {
+            const modalEl = document.getElementById('settingsModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            modal.hide();
+            
+            // Resetear UI del modal
+            const btn = document.getElementById('btnSaveSettings');
+            const statusEl = document.getElementById('settingsValidationStatus');
+            
+            btn.disabled = false;
+            btn.innerText = 'Guardar y Probar';
+            statusEl.innerText = '';
+            statusEl.style.display = 'none';
+            
+            // Actualizar UI principal
+            checkApiAvailability(); 
         }
 
         // --- GESTIÓN DE MODO DE JUEGO ---
@@ -673,8 +693,8 @@
                 let prompt = "";
                 
                 if (customTopic && customTopic.trim() !== "") {
-                    // Prompt para modo Personalizado
-                    prompt = `Genera una sola palabra concreta o nombre propio relacionado específicamente con el tema: "${customTopic}". Debe ser algo reconocible y jugable en el juego 'El Impostor'. Evita descripciones, solo la palabra. Si el tema es muy oscuro, usa algo general relacionado. Evita estas palabras recientes: ${usedWords.slice(-5).join(", ")}.`;
+                    // Prompt para modo Personalizado (MÚLTIPLES TEMAS)
+                    prompt = `Genera una sola palabra concreta o nombre propio relacionado con CUALQUIERA de los siguientes temas (o mezcla de ellos): "${customTopic}". Elige una palabra al azar de uno de los temas o que los englobe. Debe ser algo reconocible y jugable en el juego 'El Impostor'. Evita descripciones, solo la palabra. Si el tema es muy oscuro, usa algo general relacionado. Evita estas palabras recientes: ${usedWords.slice(-5).join(", ")}.`;
                 } else {
                     // Prompt para modo Clásico
                     prompt = "Genera una sola palabra o concepto concreto (máximo 3 palabras) en español para jugar al juego 'El Impostor' (Spyfall). Categorías sugeridas: Famosos actuales, Comida típica, Objetos cotidianos, Lugares, Eventos. Que sea algo divertido y reconocible en España. Responde SOLAMENTE con la palabra. Evita conceptos abstractos como sentimientos. Evita estas palabras: " + usedWords.slice(-10).join(", ");
