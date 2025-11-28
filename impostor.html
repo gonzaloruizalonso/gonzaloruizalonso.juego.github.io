@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>El Impostor</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --card-bg: #1e293b;
+            --accent-red: #ef4444;
+            --accent-green: #10b981;
+            --accent-purple: #a855f7;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-container {
+            max-width: 500px;
+            margin: 0 auto;
+            width: 100%;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Títulos */
+        .title-gradient {
+            background: linear-gradient(to right, #ef4444, #a855f7);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: 900;
+            text-transform: uppercase;
+            font-style: italic;
+        }
+
+        /* Inputs */
+        .player-input,
+        .theme-input {
+            background-color: var(--card-bg);
+            border: 1px solid #334155;
+            color: #ffffff !important;
+            font-weight: 500;
+        }
+
+        .player-input::placeholder,
+        .theme-input::placeholder {
+            color: #94a3b8 !important;
+            opacity: 1;
+        }
+
+        .player-input:focus,
+        .theme-input:focus {
+            background-color: var(--card-bg);
+            color: #ffffff !important;
+            border-color: var(--accent-red);
+            box-shadow: none;
+        }
+
+        .theme-input:focus {
+            border-color: var(--accent-purple);
+        }
+
+        /* Cartas */
+        .role-card {
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            border: 2px solid #334155;
+            cursor: pointer;
+            transition: transform 0.2s, border-color 0.2s;
+            min-height: 350px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .role-card:active {
+            transform: scale(0.98);
+        }
+
+        .role-card.impostor {
+            background-color: #450a0a;
+            border-color: var(--accent-red);
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.2);
+        }
+
+        .role-card.civilian {
+            background-color: #064e3b;
+            border-color: var(--accent-green);
+            box-shadow: 0 0 30px rgba(16, 185, 129, 0.2);
+        }
+
+        /* Botones */
+        .btn-start {
+            background: linear-gradient(to right, #dc2626, #ef4444);
+            border: none;
+            padding: 15px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-start:active {
+            transform: scale(0.98);
+        }
+
+        .btn-start:disabled {
+            background: #334155;
+            box-shadow: none;
+            color: #94a3b8;
+        }
+
+        .btn-settings {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: transparent;
+            border: none;
+            color: #64748b;
+            font-size: 1.2rem;
+            z-index: 50;
+        }
+
+        .btn-settings:hover {
+            color: white;
+        }
+
+        /* Mode Selector */
+        .mode-selector {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 5px;
+            display: flex;
+            border: 1px solid #334155;
+        }
+
+        .mode-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .mode-btn.active {
+            background-color: #334155;
+            color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .mode-btn.active.custom-mode {
+            background-color: #581c87;
+            /* Purple for custom */
+            color: white;
+        }
+
+        /* Utilidades */
+        .screen {
+            display: none;
+            /* Ocultar todo por defecto */
+            flex: 1;
+            padding: 20px;
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .word-reveal {
+            font-size: 2.5rem;
+            font-weight: 900;
+            text-align: center;
+            line-height: 1.2;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Loader Overlay */
+        #loadingOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.9);
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .spinner-ai {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(239, 68, 68, 0.3);
+            border-radius: 50%;
+            border-top-color: #ef4444;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Modal simple */
+        .modal-content {
+            background-color: var(--card-bg);
+            color: white;
+            border: 1px solid #334155;
+        }
+
+        .modal-header,
+        .modal-footer {
+            border-color: #334155;
+        }
+
+        /* Pequeño indicador de validación en configuración */
+        .validation-status {
+            font-size: 0.75rem;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .validation-status.success {
+            color: var(--accent-green);
+            display: block;
+        }
+
+        .validation-status.error {
+            color: var(--accent-red);
+            display: block;
+        }
+
+        .validation-status.checking {
+            color: #facc15;
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app-container">
+
+        <!-- SETTINGS MODAL -->
+        <div class="modal fade" id="settingsModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Configuración</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="apiKeyInput" class="form-label text-secondary small">Gemini API Key
+                                (Opcional)</label>
+                            <input type="password" class="form-control bg-dark border-secondary text-white shadow-none"
+                                id="apiKeyInput" placeholder="Pega tu API Key aquí">
+                            <div class="form-text text-secondary" style="font-size: 0.75rem;">
+                                La aplicación incluye una clave por defecto. Si usas la tuya, verificaremos que
+                                funcione.
+                            </div>
+                            <div id="settingsValidationStatus" class="validation-status"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        <button type="button" id="btnSaveSettings" class="btn btn-primary"
+                            onclick="saveSettings()">Guardar y Probar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LOADING OVERLAY -->
+        <div id="loadingOverlay">
+            <div class="spinner-ai mb-3"></div>
+            <h5 class="text-white fw-bold">Consultando a la IA...</h5>
+            <p id="loadingText" class="text-secondary small">Buscando una palabra única</p>
+        </div>
+
+        <!-- PANTALLA 1: CONFIGURACIÓN -->
+        <div id="setupScreen" class="screen active position-relative">
+            <button class="btn-settings" data-bs-toggle="modal" data-bs-target="#settingsModal">
+                <i class="fas fa-cog"></i>
+            </button>
+
+            <div class="text-center mt-3 mb-4">
+                <h1 class="display-4 title-gradient">El Impostor</h1>
+                <p class="text-secondary small">Descubre quién miente. Mínimo 3 jugadores.</p>
+            </div>
+
+            <!-- SELECCIÓN DE MODO DE JUEGO (Solo visible si la API responde OK) -->
+            <div id="gameModeContainer" class="mb-3 d-none animate-in fade-in">
+                <div class="mode-selector mb-3">
+                    <button class="mode-btn active" id="btnModeClassic" onclick="setGameMode('classic')">
+                        <i class="fas fa-dice me-1"></i> Clásico
+                    </button>
+                    <button class="mode-btn" id="btnModeCustom" onclick="setGameMode('custom')">
+                        <i class="fas fa-wand-magic-sparkles me-1"></i> Personalizado
+                    </button>
+                </div>
+
+                <!-- INPUT PARA TEMA PERSONALIZADO -->
+                <div id="customThemeInputContainer" class="d-none">
+                    <input type="text" id="customThemeInput" class="form-control theme-input py-2 shadow-none"
+                        placeholder="Escribe un tema (ej: Harry Potter, Musicales...)">
+                    <div class="form-text text-end text-secondary" style="font-size: 0.7rem;">Puedes poner varios temas
+                        separados.</div>
+                </div>
+            </div>
+
+            <div id="playersContainer" class="flex-grow-1 overflow-auto mb-3">
+                <!-- Los inputs se generan aquí -->
+            </div>
+
+            <button class="btn btn-outline-secondary w-100 mb-3 dashed-border" onclick="addPlayerInput()">
+                <i class="fas fa-plus"></i> Añadir Jugador
+            </button>
+
+            <div class="mt-auto">
+                <button id="startBtn" class="btn btn-primary w-100 btn-start text-white rounded-4"
+                    onclick="startGame()">
+                    <i class="fas fa-play me-2"></i> EMPEZAR PARTIDA
+                </button>
+                <div class="text-center mt-2">
+                    <span id="playerCountLabel" class="text-light small opacity-75">0 jugadores listos</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANTALLA 2: DISTRIBUCIÓN -->
+        <div id="gameScreen" class="screen justify-content-center">
+
+            <div class="text-center mb-4">
+                <span class="badge bg-secondary rounded-pill mb-2">Turno <span id="currentTurnLabel">1</span></span>
+                <h2 class="fw-bold">Pásale el móvil a</h2>
+                <h1 id="playerNameDisplay" class="title-gradient display-5 mt-2">NOMBRE</h1>
+            </div>
+
+            <!-- TARJETA OCULTA (TAPA) -->
+            <div id="hiddenCard" class="role-card" onclick="revealCard()">
+                <div class="bg-dark p-4 rounded-circle mb-3">
+                    <i class="fas fa-eye fa-3x text-secondary"></i>
+                </div>
+                <h4 class="text-light fw-bold">Toca para ver tu rol</h4>
+                <p class="text-secondary small text-center px-4">Asegúrate de que nadie más esté mirando</p>
+            </div>
+
+            <!-- TARJETA REVELADA (ROL) -->
+            <div id="revealedCard" class="d-none w-100">
+                <div id="roleContent" class="role-card mb-4">
+                    <!-- Contenido dinámico (Impostor o Palabra) -->
+                </div>
+
+                <button class="btn btn-light w-100 py-3 fw-bold rounded-4 shadow" onclick="nextPlayer()">
+                    <i class="fas fa-eye-slash me-2"></i> Ocultar y Pasar
+                </button>
+            </div>
+
+        </div>
+
+        <!-- PANTALLA 3: RESULTADO -->
+        <div id="resultScreen" class="screen justify-content-center text-center">
+
+            <div class="card bg-dark border-secondary mb-4 shadow-lg">
+                <div class="card-body p-5">
+                    <p class="text-secondary text-uppercase fw-bold small ls-2">Empieza hablando</p>
+                    <h1 id="starterName" class="display-3 fw-black text-warning mb-0"
+                        style="text-shadow: 0 0 20px rgba(255,193,7,0.3);">NOMBRE</h1>
+                </div>
+            </div>
+
+            <div class="bg-opacity-10 bg-white p-4 rounded-3 text-start mb-5 border border-secondary">
+                <h5 class="text-light mb-3"><i class="fas fa-info-circle me-2"></i>Instrucciones:</h5>
+                <ul class="text-secondary small mb-0 ps-3">
+                    <li class="mb-2">Decid una palabra por turnos.</li>
+                    <li class="mb-2">El <span class="text-danger fw-bold">Impostor</span> no sabe la palabra y debe
+                        disimular.</li>
+                    <li>Votad quién creéis que es el mentiroso.</li>
+                </ul>
+            </div>
+
+            <div class="mt-auto gap-3 d-grid">
+                <button class="btn btn-danger btn-lg py-3 fw-bold rounded-4" onclick="playAgain()">
+                    <i class="fas fa-redo me-2"></i> Otra Ronda
+                </button>
+                <button class="btn btn-outline-secondary py-2 rounded-4" onclick="resetToSetup()">
+                    Cambiar Jugadores
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Bootstrap Bundle (for Modal) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- API KEY GESTIONADA POR GITHUB ACTIONS ---
+        // En local estará vacía. Al desplegar, GitHub la rellenará.
+        const injectedApiKey = "AIzaSyBnan8Ka5OQVQfzRQmsFbxpsFyQfMbcmoE";
+
+        // --- BASE DE DATOS DE RESPALDO (FALLBACK) ---
+        const FALLBACK_WORDS = [
+            // --- FAMOSOS & ICONOS ---
+            "Rosalía", "Ibai Llanos", "Fernando Alonso", "Rafa Nadal", "Belén Esteban",
+            "El Rey Felipe VI", "C. Tangana", "Quevedo", "Bad Bunny", "Messi",
+            "Cristiano Ronaldo", "Aitana", "Broncano", "Pedro Sánchez",
+            "Ayuso", "Georgina", "Kim Kardashian", "Elon Musk", "Dua Lipa",
+            "Taylor Swift", "Bizarrap", "IlloJuan", "El Xokas", "Hasbulla",
+
+            // --- MADRID SUR & CIUDADES ---
+            "Leganés", "Getafe", "Fuenlabrada", "Móstoles", "Alcorcón",
+            "Parla", "Pinto", "Valdemoro", "Villaverde", "Vallecas",
+            "Usera", "Carabanchel", "Aranjuez", "Chinchón", "La Cubierta de Leganés",
+            "Cerro de los Ángeles", "Parquesur", "Xanadú", "Estación de Atocha", "Sol",
+
+            // --- PARQUES DE ATRACCIONES & OCIO ---
+            "Parque Warner", "Parque de Atracciones", "Aquopolis", "PortAventura", "Disneyland",
+            "La Lanzadera", "Stunt Fall", "Superman", "El Abismo", "Casa del Terror",
+            "Montaña Rusa", "Noria", "Coches de Choque", "Tiovivo", "Pasaje del Terror",
+            "Zoo de Madrid", "Faunia", "Teleférico", "Kinépolis", "Bowling",
+
+            // --- FIESTA & NOCHE ---
+            "Cerveza", "Vino Tinto", "Uber", "Cabify",
+
+            // --- VIDA COTIDIANA (20-25 AÑOS) ---
+            "Tinder", "Bumble", "Grindr", "Instagram", "TikTok",
+            "BeReal", "OnlyFans", "Spotify", "Netflix", "ChatGPT",
+            "Bizum",
+
+            // --- OBJETOS & COSAS RANDOM ---
+            "Satisfyer", "Air Fryer", "Abono Transporte", "Cercanías Renfe",
+            "iPhone", "Cargador del Móvil", "Batería Portátil", "AirPods", "Alexa",
+            "Papel de Fumar", "Mechero", "Cenicero", "Monster Energy", "Red Bull",
+            "Proteína", "Creatina", "Gymbro", "Satisfyer", "Pijama",
+
+            // --- LUGARES ---
+            "Mercadona", "Zara", "Primark", "IKEA", "Decathlon",
+            "Gimnasio", "Biblioteca", "Universidad", "Piscina Municipal", "Playa",
+            "Camping", "Festival de Música", "Aeropuerto", "Avión (Ryanair)", "BlaBlaCar",
+            "Comisaría", "Hospital", "Dentista", "Tanatorio",
+
+            // --- COMIDA ---
+            "Tortilla de Patata", "Paella", "Croquetas", "Bravas", "Jamón Serrano",
+            "Sushi", "Pizza", "Hamburguesa", "McFlurry", "Goiko",
+            "100 Montaditos", "Taco Bell", "Churros con Chocolate", "Torrijas", "Roscón de Reyes"
+        ];
+
+        // --- ESTADO DEL JUEGO ---
+        let players = ['', '', ''];
+        let usedWords = [];
+        let secretWord = "";
+        let impostorIndex = -1;
+        let currentPlayerIndex = 0;
+        let activePlayersList = [];
+        let currentGameMode = 'classic'; // 'classic' or 'custom'
+
+        // --- INICIALIZACIÓN ---
+        document.addEventListener('DOMContentLoaded', () => {
+            renderPlayerInputs();
+            const savedKey = localStorage.getItem('impostor_api_key');
+            if (savedKey) {
+                document.getElementById('apiKeyInput').value = savedKey;
+            }
+            checkApiAvailability();
+        });
+
+        // --- VALIDACIÓN DE API ---
+        async function validateApiKey(apiKey) {
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: "Test" }] }] })
+                });
+                return response.ok;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        async function checkApiAvailability() {
+            const userKey = localStorage.getItem('impostor_api_key');
+            let apiKeyToTest = userKey;
+            if (!apiKeyToTest && injectedApiKey && injectedApiKey.trim() !== "") {
+                apiKeyToTest = injectedApiKey;
+            }
+
+            if (!apiKeyToTest) {
+                document.getElementById('gameModeContainer').classList.add('d-none');
+                return;
+            }
+
+            const isValid = await validateApiKey(apiKeyToTest);
+
+            if (isValid) {
+                document.getElementById('gameModeContainer').classList.remove('d-none');
+            } else {
+                document.getElementById('gameModeContainer').classList.add('d-none');
+                if (currentGameMode === 'custom') {
+                    setGameMode('classic');
+                }
+            }
+        }
+
+        // --- GESTIÓN DE SETTINGS ---
+        async function saveSettings() {
+            const btn = document.getElementById('btnSaveSettings');
+            const statusEl = document.getElementById('settingsValidationStatus');
+            const keyInput = document.getElementById('apiKeyInput').value.trim();
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Verificando...';
+            statusEl.className = 'validation-status checking';
+            statusEl.innerText = 'Conectando con Google Gemini...';
+
+            let isValid = false;
+            let keyToTest = keyInput || injectedApiKey;
+
+            isValid = await validateApiKey(keyToTest);
+
+            if (keyInput) {
+                localStorage.setItem('impostor_api_key', keyInput);
+            } else {
+                localStorage.removeItem('impostor_api_key');
+            }
+
+            if (isValid) {
+                statusEl.className = 'validation-status success';
+                statusEl.innerText = '¡Conexión exitosa!';
+                setTimeout(() => { closeSettingsModal(); }, 1000);
+            } else {
+                statusEl.className = 'validation-status error';
+                statusEl.innerText = 'Error: La clave API no es válida.';
+                btn.disabled = false;
+                btn.innerText = 'Guardar y Probar';
+                checkApiAvailability();
+            }
+        }
+
+        function closeSettingsModal() {
+            const modalEl = document.getElementById('settingsModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            modal.hide();
+
+            const btn = document.getElementById('btnSaveSettings');
+            const statusEl = document.getElementById('settingsValidationStatus');
+            btn.disabled = false;
+            btn.innerText = 'Guardar y Probar';
+            statusEl.innerText = '';
+            statusEl.style.display = 'none';
+            checkApiAvailability();
+        }
+
+        function setGameMode(mode) {
+            currentGameMode = mode;
+            document.getElementById('btnModeClassic').classList.remove('active', 'custom-mode');
+            document.getElementById('btnModeCustom').classList.remove('active', 'custom-mode');
+
+            if (mode === 'classic') {
+                document.getElementById('btnModeClassic').classList.add('active');
+                document.getElementById('customThemeInputContainer').classList.add('d-none');
+            } else {
+                document.getElementById('btnModeCustom').classList.add('active', 'custom-mode');
+                document.getElementById('customThemeInputContainer').classList.remove('d-none');
+                document.getElementById('customThemeInput').focus();
+            }
+        }
+
+        // --- GESTIÓN DE JUGADORES ---
+        function renderPlayerInputs() {
+            const container = document.getElementById('playersContainer');
+            container.innerHTML = '';
+            players.forEach((player, index) => {
+                const div = document.createElement('div');
+                div.className = 'input-group mb-2';
+                const deleteBtn = players.length > 3
+                    ? `<button class="btn btn-outline-secondary border-start-0" type="button" onclick="removePlayer(${index})"><i class="fas fa-times"></i></button>`
+                    : '';
+                div.innerHTML = `
+                    <span class="input-group-text bg-dark border-secondary text-secondary"><i class="fas fa-user"></i></span>
+                    <input type="text" class="form-control player-input shadow-none" placeholder="Jugador ${index + 1}" value="${player}" oninput="updatePlayerName(${index}, this.value)">
+                    ${deleteBtn}
+                `;
+                container.appendChild(div);
+            });
+            updateCountLabel();
+        }
+
+        function updatePlayerName(index, value) {
+            players[index] = value;
+            updateCountLabel();
+        }
+
+        function addPlayerInput() {
+            players.push('');
+            renderPlayerInputs();
+        }
+
+        function removePlayer(index) {
+            if (players.length > 3) {
+                players.splice(index, 1);
+                renderPlayerInputs();
+            }
+        }
+
+        function updateCountLabel() {
+            const count = players.filter(p => p.trim() !== '').length;
+            const label = document.getElementById('playerCountLabel');
+            const btn = document.getElementById('startBtn');
+            label.innerText = `${count} jugadores listos`;
+            if (count >= 3) {
+                btn.disabled = false;
+                btn.style.opacity = "1";
+            } else {
+                btn.disabled = true;
+                btn.style.opacity = "0.5";
+            }
+        }
+
+        // --- LÓGICA DE PALABRAS ---
+        function getFallbackWord() {
+            let fallbackWord;
+            let attempts = 0;
+            do {
+                fallbackWord = FALLBACK_WORDS[Math.floor(Math.random() * FALLBACK_WORDS.length)];
+                attempts++;
+            } while (usedWords.includes(fallbackWord) && attempts < 50);
+            return fallbackWord;
+        }
+
+        async function fetchWordFromAI(customTopic = null) {
+            const userKey = localStorage.getItem('impostor_api_key');
+            const apiKeyToUse = userKey || injectedApiKey;
+
+            if (!apiKeyToUse || apiKeyToUse.trim() === "") {
+                if (customTopic) throw new Error("NO_API_FOR_CUSTOM");
+                return getFallbackWord();
+            }
+
+            try {
+                let prompt = "";
+
+                if (customTopic && customTopic.trim() !== "") {
+                    // Prompt MEJORADO para modo Personalizado
+                    prompt = `Eres el gamemaster del juego 'El Impostor'. El tema es: "${customTopic}".
+                    Reglas ESTRICTAS:
+                    1. Si el tema implica obras (musicales, películas, libros) o lugares específicos (parques, montañas rusas, ciudades), responde con un **NOMBRE PROPIO** famoso (ej: 'El Rey León' si es musicales, 'Shambhala' si es montañas rusas). NO uses palabras genéricas (ej: 'actor', 'vagón', 'raíl', 'solista').
+                    2. Si el tema son objetos o categorías generales (cocina, ropa), usa un **OBJETO CONCRETO** (ej: 'Tenedor', 'Bufanda').
+                    3. La palabra debe ser divertida y jugable. Evita lo abstracto.
+                    4. Responde ÚNICAMENTE con la palabra secreta. Sin puntos ni explicaciones.
+                    5. Evita estas palabras recientes: ${usedWords.slice(-5).join(", ")}.`;
+                } else {
+                    prompt = "Genera una sola palabra o concepto concreto (máximo 3 palabras) en español para jugar al juego 'El Impostor' (Spyfall). Categorías sugeridas: Famosos actuales, Comida típica, Objetos cotidianos, Lugares, Eventos. Que sea algo divertido y reconocible en España. Responde SOLAMENTE con la palabra. Evita conceptos abstractos como sentimientos. Evita estas palabras: " + usedWords.slice(-10).join(", ");
+                }
+
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKeyToUse}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+
+                if (!response.ok) throw new Error(`API Error: ${response.status}`);
+
+                const data = await response.json();
+                const aiWord = data.candidates[0].content.parts[0].text.trim().replace(/\.$/, '').replace(/\*+/g, '');
+                return aiWord;
+
+            } catch (error) {
+                console.warn("Fallo en IA:", error);
+
+                // CRÍTICO: Si estamos en modo personalizado, NO usar fallback genérico
+                if (customTopic) {
+                    throw new Error("AI_GENERATION_FAILED");
+                }
+                return getFallbackWord();
+            }
+        }
+
+        // --- LÓGICA DEL JUEGO ---
+        function switchScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        async function startGame() {
+            activePlayersList = players.filter(p => p.trim() !== '');
+            if (activePlayersList.length < 3) {
+                alert("Necesitas al menos 3 jugadores.");
+                return;
+            }
+
+            let topic = null;
+            if (currentGameMode === 'custom') {
+                const input = document.getElementById('customThemeInput');
+                topic = input.value.trim();
+                if (!topic) {
+                    alert("Por favor, escribe un tema para jugar en modo personalizado.");
+                    input.focus();
+                    return;
+                }
+            }
+
+            const success = await setupRound(topic);
+            if (success) {
+                switchScreen('gameScreen');
+                showTurn();
+            }
+        }
+
+        async function setupRound(topic = null) {
+            // LÓGICA DE MODOS
+            if (topic) {
+                // SELECCIÓN ALEATORIA DE TEMA
+                const topicsList = topic.split(',').map(t => t.trim()).filter(t => t.length > 0);
+                const selectedTopic = topicsList[Math.floor(Math.random() * topicsList.length)];
+
+                // MODO PERSONALIZADO: USA IA Y LOADER
+                document.getElementById('loadingOverlay').style.display = 'flex';
+
+                // HIDE SPOILER: Si hay más de un tema, ocultar cuál se eligió
+                if (topicsList.length > 1) {
+                    document.getElementById('loadingText').innerText = "Generando palabra de uno de tus temas...";
+                } else {
+                    document.getElementById('loadingText').innerText = `Generando palabra sobre: ${selectedTopic}`;
+                }
+
+                try {
+                    const newWord = await fetchWordFromAI(selectedTopic);
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                    return initGameVariables(newWord);
+
+                } catch (error) {
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                    if (error.message === "AI_GENERATION_FAILED" || error.message === "NO_API_FOR_CUSTOM") {
+                        alert("⚠️ Error de conexión con la IA.\nNo se pudo generar una palabra para tu tema personalizado. Por favor, inténtalo de nuevo.");
+                    } else {
+                        console.error(error);
+                    }
+                    return false;
+                }
+            } else {
+                // MODO CLÁSICO: DIRECTO A LA LISTA, SIN IA, SIN LOADER
+                const newWord = getFallbackWord();
+                return initGameVariables(newWord);
+            }
+        }
+
+        function initGameVariables(word) {
+            if (usedWords.length > 20) usedWords.shift();
+            usedWords.push(word);
+
+            secretWord = word;
+            impostorIndex = Math.floor(Math.random() * activePlayersList.length);
+            currentPlayerIndex = 0;
+            return true;
+        }
+
+        // --- PANTALLAS DE JUEGO ---
+        function showTurn() {
+            document.getElementById('hiddenCard').classList.remove('d-none');
+            document.getElementById('revealedCard').classList.add('d-none');
+            document.getElementById('currentTurnLabel').innerText = `${currentPlayerIndex + 1}/${activePlayersList.length}`;
+            document.getElementById('playerNameDisplay').innerText = activePlayersList[currentPlayerIndex];
+        }
+
+        function revealCard() {
+            const isImpostor = currentPlayerIndex === impostorIndex;
+            const cardContent = document.getElementById('roleContent');
+
+            document.getElementById('hiddenCard').classList.add('d-none');
+            document.getElementById('revealedCard').classList.remove('d-none');
+
+            cardContent.classList.remove('impostor', 'civilian');
+
+            if (isImpostor) {
+                cardContent.classList.add('impostor');
+                cardContent.innerHTML = `
+                    <i class="fas fa-skull fa-4x text-danger mb-3 animate-pulse"></i>
+                    <h2 class="text-danger fw-black ls-2 mb-2">IMPOSTOR</h2>
+                    <p class="text-danger-emphasis text-center px-3 small">
+                        No sabes la palabra.<br>Escucha a los demás, disimula e intenta adivinarla.
+                    </p>
+                `;
+            } else {
+                cardContent.classList.add('civilian');
+                cardContent.innerHTML = `
+                    <div class="bg-success bg-opacity-25 p-3 rounded-circle mb-3">
+                        <i class="fas fa-check fa-2x text-success"></i>
+                    </div>
+                    <div class="word-reveal text-white mb-2">${secretWord}</div>
+                    <p class="text-success-emphasis text-center px-3 small">
+                        Esta es la palabra clave.<br>Di algo relacionado sin ser demasiado obvio.
+                    </p>
+                `;
+            }
+        }
+
+        function nextPlayer() {
+            currentPlayerIndex++;
+            if (currentPlayerIndex >= activePlayersList.length) {
+                showResults();
+            } else {
+                showTurn();
+            }
+        }
+
+        function showResults() {
+            const randomIndex = Math.floor(Math.random() * activePlayersList.length);
+            const randomStarter = activePlayersList[randomIndex];
+            document.getElementById('starterName').innerText = randomStarter;
+            switchScreen('resultScreen');
+        }
+
+        async function playAgain() {
+            let topic = null;
+            if (currentGameMode === 'custom') {
+                topic = document.getElementById('customThemeInput').value.trim();
+            }
+
+            const success = await setupRound(topic);
+            if (success) {
+                switchScreen('gameScreen');
+                showTurn();
+            }
+        }
+
+        function resetToSetup() {
+            switchScreen('setupScreen');
+        }
+    </script>
+</body>
+
+</html>
